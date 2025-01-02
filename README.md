@@ -25,6 +25,7 @@ func main() {
 
 	rtr := amrouter.NewRouter()
 	rtr.PathToStaticDir = "/static"
+	rtr.Use(addTrailingSlash)
 	rtr.AddRoute("GET", "/", http.HandlerFunc(homeHandler), homeMiddleWare)
 	rtr.AddRoute("GET", "(^/[\\w-]+)/?$", func(w http.ResponseWriter, r *http.Request) {
 		key := rtr.GetField(r, 0)
