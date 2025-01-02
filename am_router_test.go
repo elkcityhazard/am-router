@@ -124,7 +124,7 @@ func TestServeHTTP(t *testing.T) {
 	}
 
 	testRtr := &AMRouter{
-		PathToStaticDir:   "./static",
+		PathToStaticDir:   "static",
 		EmbeddedStaticDir: staticDir,
 		IsProduction:      false,
 		Routes: []AMRoute{
