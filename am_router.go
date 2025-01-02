@@ -16,7 +16,7 @@ func (rtr *AMRouter) GetField(r *http.Request, index int) string {
 	fields := r.Context().Value(CtxKey{}).([]string)
 	fmt.Println(fields)
 	if len(fields) > 0 {
-		if index > len(fields) {
+		if index >= len(fields) {
 			return ""
 		}
 		return fields[index]
@@ -135,6 +135,7 @@ func (rtr *AMRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 
 	} else {
+		w.WriteHeader(http.StatusNotFound)
 		rtr.Custom404Handler(w, r)
 		return
 	}
@@ -147,13 +148,14 @@ func (rtr *AMRouter) ServeStaticDirectory(w http.ResponseWriter, r *http.Request
 	// handle static directory
 	if strings.HasPrefix(r.URL.Path, rtr.PathToStaticDir) {
 		// if not in prod, load static resources from disk, else embed
+		fmt.Println(r.URL.Path)
 		if !rtr.IsProduction {
 			fileServer := http.FileServer(http.Dir(rtr.PathToStaticDir))
-			http.StripPrefix("/static/", fileServer).ServeHTTP(w, r)
+			http.StripPrefix(fmt.Sprintf("%s/", rtr.PathToStaticDir), fileServer).ServeHTTP(w, r)
 
 		} else {
 			fileServer := http.FileServer(http.FS(rtr.EmbeddedStaticDir))
-			http.StripPrefix("/static/", fileServer).ServeHTTP(w, r)
+			http.StripPrefix(fmt.Sprintf("%s/", rtr.PathToStaticDir), fileServer).ServeHTTP(w, r)
 		}
 
 		return true
@@ -183,6 +185,8 @@ func (rtr *AMRouter) Custom404Handler(w http.ResponseWriter, r *http.Request) {
 	if len(rtr.GlobalMiddleware) > 0 {
 		notFoundHandler = rtr.AddMiddlewareToHandler(notFoundHandler, rtr.GlobalMiddleware...)
 	}
+
+	w.WriteHeader(http.StatusNotFound)
 
 	notFoundHandler.ServeHTTP(w, r)
 }
