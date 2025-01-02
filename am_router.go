@@ -10,22 +10,6 @@ import (
 	"strings"
 )
 
-type CtxKey struct{}
-
-func (rtr *AMRouter) GetField(r *http.Request, index int) string {
-	fields := r.Context().Value(CtxKey{}).([]string)
-	fmt.Println(fields)
-	if len(fields) > 0 {
-		if index >= len(fields) {
-			return ""
-		}
-		return fields[index]
-	} else {
-		return ""
-	}
-
-}
-
 type AMRouter struct {
 	PathToStaticDir   string
 	EmbeddedStaticDir embed.FS
@@ -53,6 +37,23 @@ type AMRoute struct {
 
 // MiddleWareFunc is an alias for func(http.Handler) http.Handler
 type MiddleWareFunc func(http.Handler) http.Handler
+
+// CtxKey is used to exract the route param
+type CtxKey struct{}
+
+// GetField is used to cast the route param to a string in the handler
+func (rtr *AMRouter) GetField(r *http.Request, index int) string {
+	fields := r.Context().Value(CtxKey{}).([]string)
+	fmt.Println(fields)
+	if len(fields) > 0 {
+		if index >= len(fields) {
+			return ""
+		}
+		return fields[index]
+	} else {
+		return ""
+	}
+}
 
 // AddRoute takes a method, pattern, handler, and middleware and adds it to an instance of AMRouter.Routes
 // It can return a regex compile error
@@ -82,6 +83,7 @@ func (rtr *AMRouter) AddRoute(method string, pattern string, handler http.Handle
 	return nil
 }
 
+// ServeHTTTP is used to process the route request and respond with an appropriate handler
 func (rtr *AMRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Don't create new context unnecessarily
 	isStatic := rtr.ServeStaticDirectory(w, r)
@@ -179,6 +181,7 @@ func (rtr *AMRouter) AddMiddlewareToHandler(handler http.Handler, middleware ...
 	return handler
 }
 
+// Custom404Handler is used to wrap the http.NotFoundHandler with Global Middleware.
 func (rtr *AMRouter) Custom404Handler(w http.ResponseWriter, r *http.Request) {
 	notFoundHandler := http.NotFoundHandler()
 
